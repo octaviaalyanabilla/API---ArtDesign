@@ -21,7 +21,7 @@ class LoginTest extends TestCase
         ]);
 
 
-        $response = $this->post('/api/sanctum/token', [
+        $response = $this->post('/api/login', [
             
             'email' => $user->email,
             'password' => 'secret',
@@ -38,6 +38,30 @@ class LoginTest extends TestCase
         ]);
         }
 
+    /** @test */
+    public function get_user_from_token()
+    {
+        $user = User::create([
+            'name' => 'user',
+            'email' => 'user@gmail.com',
+            'password' => bcrypt('secret')
+        ]);
+
+        $token = $user->createToken('android')->plainTextToken;
+
+        $response = $this->get('/api/user', [
+            'Authorization' => 'Bearer ' . $token
+        ]);
+
+
+        $response->assertSuccessful();
+
+        $response->assertJson(function($json) {
+            $json->where('email', 'user@gmail.com')
+            ->missing('password')
+            ->etc();
+        });
+    }
     
     
 }

@@ -14,24 +14,18 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
 
-Route::post('/sanctum/token', function (Request $request) {
-    $request->validate([
-        'email' => 'required|email',
-        'password' => 'required',
-        'device_name' => 'required',
-    ]);
 
-    $user = User::where('email', $request->email)->first();
+Route::post('/login', [LoginController::class, 'login']);
+Route::post('/registration', [RegistrationController::class, 'register']);
 
-    if (! $user || ! Hash::check($request->password, $user->password)) {
-        throw ValidationException::withMessages([
-            'email' => ['The provided credentials are incorrect.'],
-        ]);
-    }
 
-    return $user->createToken($request->device_name)->plainTextToken;
+Route::group(['middleware' => ['auth:sanctum']], function($route){
+    $route->get('/user', function (Request $request){
+        return $request->user();
+    });
+    $route->post('/logout', function () {
+        return request()->user()->currentAccessToken()->delete();
+    });
+    
 });
